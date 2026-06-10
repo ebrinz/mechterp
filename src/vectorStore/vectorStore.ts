@@ -13,10 +13,13 @@ interface Opts {
 }
 
 export class VectorStore {
-  private constructor(
-    private db: Database,
-    private points: Point[],
-  ) {}
+  private db: Database
+  private points: Point[]
+
+  private constructor(db: Database, points: Point[]) {
+    this.db = db
+    this.points = points
+  }
 
   static async fromBytes(bytes: Uint8Array, opts: Opts = {}): Promise<VectorStore> {
     const config: SqlJsConfig = {}
