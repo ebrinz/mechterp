@@ -1,122 +1,91 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Embedder } from './embedder/embedder'
+import { VectorStore } from './vectorStore/vectorStore'
+import { placeLivePoint } from './placement/placement'
+import { toTokens, maskedSentence, type Token } from './tokens/tokens'
+import { Scene } from './scene/Scene'
+import { TokenChips } from './ui/TokenChips'
+import { NeighborPanel } from './ui/NeighborPanel'
+import { Legend } from './ui/Legend'
+import { BottomSheet } from './ui/BottomSheet'
+import type { Neighbor, Point, XYZ } from './types'
 
-function App() {
-  const [count, setCount] = useState(0)
+const K = 8
+
+export default function App() {
+  const [embedder, setEmbedder] = useState<Embedder | null>(null)
+  const [store, setStore] = useState<Awaited<ReturnType<typeof VectorStore.fromUrl>> | null>(null)
+  const [loadMsg, setLoadMsg] = useState('Loading model & data…')
+  const [tokens, setTokens] = useState<Token[]>([])
+  const [neighbors, setNeighbors] = useState<Neighbor[]>([])
+  const [live, setLive] = useState<XYZ | null>(null)
+  const [trail, setTrail] = useState<XYZ[]>([])
+
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      const [e, s] = await Promise.all([
+        Embedder.create((p) => p.progress && setLoadMsg(`Loading model… ${Math.round(p.progress)}%`)),
+        VectorStore.fromUrl('/emotions.sqlite'),
+      ])
+      if (!alive) return
+      setEmbedder(e); setStore(s); setLoadMsg('')
+    })()
+    return () => { alive = false }
+  }, [])
+
+  const points: Point[] = useMemo(() => store?.all() ?? [], [store])
+  const centroids = useMemo(() => store?.centroids() ?? [], [store])
+
+  const recompute = useRef(async (_toks: Token[]) => {})
+  recompute.current = async (toks: Token[]) => {
+    if (!embedder || !store) return
+    const sentence = maskedSentence(toks)
+    if (!sentence) { setLive(null); setNeighbors([]); return }
+    const { vector } = await embedder.embed(sentence)
+    const nbrs = store.knn(vector, K)
+    const xyz = placeLivePoint(nbrs)
+    setNeighbors(nbrs)
+    setLive(xyz)
+    setTrail((t) => [...t.slice(-40), xyz])
+  }
+
+  const onText = (text: string) => {
+    const toks = toTokens(text)
+    setTokens(toks)
+    void recompute.current(toks)
+  }
+  const onToggle = (i: number) => {
+    setTokens((prev) => {
+      const next = prev.map((t) => (t.index === i ? { ...t, masked: !t.masked } : t))
+      void recompute.current(next)
+      return next
+    })
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <div className="flex h-[100dvh] flex-col bg-gray-950 text-gray-100 md:flex-row">
+      <div className="relative flex-1">
+        <Scene points={points} centroids={centroids} live={live} trail={trail} />
+        {loadMsg && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/60">{loadMsg}</div>
+        )}
+      </div>
+      <div className="md:w-96">
+        <BottomSheet>
+          <input
+            placeholder="Type a sentence to see where it lands…"
+            disabled={!embedder}
+            onChange={(e) => onText(e.target.value)}
+            className="mb-3 w-full rounded bg-gray-800 p-2 text-sm outline-none"
+          />
+          <TokenChips tokens={tokens} onToggle={onToggle} />
+          <div className="my-3 border-t border-gray-800" />
+          <NeighborPanel neighbors={neighbors} />
+          <div className="my-3 border-t border-gray-800" />
+          <Legend />
+        </BottomSheet>
+      </div>
+    </div>
   )
 }
-
-export default App
