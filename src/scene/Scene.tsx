@@ -1,5 +1,5 @@
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
+import { OrbitControls, Line } from '@react-three/drei'
 import * as THREE from 'three'
 import { useMemo } from 'react'
 import type { Point, XYZ } from '../types'
@@ -36,18 +36,13 @@ function ReferenceCloud({ points }: { points: Point[] }) {
 }
 
 function LivePoint({ live, trail }: { live: XYZ | null; trail: XYZ[] }) {
-  const trailGeom = useMemo(() => {
-    const g = new THREE.BufferGeometry()
-    g.setFromPoints(trail.map((t) => new THREE.Vector3(...t)))
-    return g
-  }, [trail])
   return (
     <group>
       {trail.length > 1 && (
-        <threeLine>
-          <primitive object={trailGeom} attach="geometry" />
-          <lineBasicMaterial color="#ffffff" transparent opacity={0.4} />
-        </threeLine>
+        // drei's <Line> is the supported way to draw a polyline in r3f. The previous
+        // <threeLine> is not a real r3f element and threw "ThreeLine is not part of the
+        // THREE namespace", crashing the whole tree once the trail had >1 point.
+        <Line points={trail} color="#ffffff" lineWidth={1} transparent opacity={0.4} />
       )}
       {live && (
         <mesh position={live}>

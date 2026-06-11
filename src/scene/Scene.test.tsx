@@ -6,7 +6,7 @@ vi.mock('@react-three/fiber', () => ({
   Canvas: ({ children }: { children: React.ReactNode }) => <div data-testid="canvas">{children}</div>,
   useFrame: () => {},
 }))
-vi.mock('@react-three/drei', () => ({ OrbitControls: () => null }))
+vi.mock('@react-three/drei', () => ({ OrbitControls: () => null, Line: () => null }))
 
 import { Scene } from './Scene'
 import type { Point, XYZ } from '../types'
@@ -17,6 +17,20 @@ describe('Scene', () => {
   it('renders without crashing given points and a live position', () => {
     const { getByTestId } = render(
       <Scene points={pts} centroids={[]} live={[1, 1, 1] as XYZ} trail={[[0, 0, 0]]} />,
+    )
+    expect(getByTestId('canvas')).toBeTruthy()
+  })
+
+  it('renders the drift trail (>1 point) without throwing', () => {
+    // The trail path only renders once length > 1 — the exact condition that crashed in the
+    // browser with the old invalid <threeLine>. Intrinsic validity is verified in-browser.
+    const { getByTestId } = render(
+      <Scene
+        points={pts}
+        centroids={[]}
+        live={[2, 2, 2] as XYZ}
+        trail={[[0, 0, 0], [1, 1, 1], [2, 2, 2]]}
+      />,
     )
     expect(getByTestId('canvas')).toBeTruthy()
   })

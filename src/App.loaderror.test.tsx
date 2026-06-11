@@ -10,7 +10,7 @@ vi.mock('./vectorStore/vectorStore', () => ({
   VectorStore: { fromUrl: async () => { throw new Error('not a database') } },
 }))
 vi.mock('@react-three/fiber', () => ({ Canvas: ({ children }: any) => <div>{children}</div>, useFrame: () => {} }))
-vi.mock('@react-three/drei', () => ({ OrbitControls: () => null }))
+vi.mock('@react-three/drei', () => ({ OrbitControls: () => null, Line: () => null }))
 
 import App from './App'
 
