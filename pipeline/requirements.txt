@@ -1,0 +1,10 @@
+sentence-transformers==3.0.1
+transformers==4.44.2
+optimum[exporters]==1.21.4
+onnx==1.16.2
+onnxruntime==1.18.1
+datasets==2.21.0
+umap-learn==0.5.6
+numpy==1.26.4
+sqlite-vec==0.1.6
+pytest==8.3.2
