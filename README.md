@@ -25,6 +25,12 @@ npm run dev        # http://localhost:5173
 The app needs two prebuilt assets in `public/` (git-ignored — see **Data pipeline** below).
 Without them the UI loads but the cloud is empty and embedding fails to fetch the model.
 
+> **First run needs network for the model.** The 3D cloud loads from the local
+> `emotions.sqlite`, but live embedding uses `transformers.js`, which downloads
+> `Xenova/all-MiniLM-L6-v2` from the HuggingFace CDN on first use and caches it in the
+> browser. Do the first `npm run dev` on a non-throttled network; afterwards it's cached and
+> works offline. (Shared/public-wifi IPs can get 429-rate-limited by the HF CDN.)
+
 ```bash
 npm run test       # Vitest unit/contract/integration suite
 npm run build      # tsc type-check + production build to dist/

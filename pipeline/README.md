@@ -16,13 +16,22 @@ python -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
 
 python export_onnx.py        # -> public/models/minilm-internals/model.onnx (+ tokenizer)
-python build_dataset.py      # -> public/emotions.sqlite  (downloads GoEmotions + the model)
+python build_dataset.py      # -> public/emotions.sqlite
 
 pytest tests/test_outputs.py -v   # asserts the data contract + that ONNX exposes internals
 ```
 
-Heads-up: the first run downloads PyTorch, the model (~90 MB), and the GoEmotions dataset,
-then runs UMAP — do it on a good network. `build_dataset.py` is deterministic (`SEED=42`).
+Notes:
+- `export_onnx.py` downloads `all-MiniLM-L6-v2` from HuggingFace (~90 MB) and forces the
+  legacy TorchScript ONNX exporter (`dynamo=False`) so the `dynamic_axes` are honored.
+- `build_dataset.py` pulls GoEmotions' "simplified" train split from **Google's GitHub TSV**
+  (not the HF datasets API — that endpoint aggressively rate-limits shared/public IPs), and
+  loads the embedding model from the local HF cache. Once the model is cached you can run it
+  fully offline to dodge any HF throttling:
+  ```bash
+  HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 python build_dataset.py
+  ```
+- Deterministic (`SEED=42`). Produced 1650 points across all 28 emotions in the reference run.
 
 ## Knobs
 - `PER_EMOTION` in `build_dataset.py` (default 60 → ~1.7k points). Lower it if an iPhone
