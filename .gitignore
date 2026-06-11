@@ -8,8 +8,10 @@ __pycache__/
 # Build/pipeline artifacts (regenerated locally; see pipeline/README.md)
 *.wasm
 public/sql-wasm/sql-wasm.wasm
-public/emotions.sqlite
 public/models/
+# NOTE: public/emotions.sqlite IS committed (3.4MB) so the git-connected Vercel build can
+# serve it — it can't be regenerated in CI (needs the Python pipeline). Regenerate locally
+# with pipeline/build_dataset.py and commit the new file when the reference set changes.
 
 # pipeline run log
 pipeline/build.log
