@@ -20,12 +20,31 @@ SEED = 42
 
 
 def _load_go_emotions():
-    """Load GoEmotions, tolerating datasets versions that require trust_remote_code for scripts."""
-    try:
-        return load_dataset("go_emotions", "simplified", split="train")
-    except Exception:
-        # datasets>=2.16 gates script-based loaders behind trust_remote_code.
-        return load_dataset("go_emotions", "simplified", split="train", trust_remote_code=True)
+    """Load GoEmotions, retrying on HF API 429 rate-limits with backoff.
+
+    A single call path (trust_remote_code=True is accepted on datasets>=2.16 and ignored
+    for parquet-backed datasets) avoids doubling the API hits that trigger throttling.
+    """
+    import time
+
+    from huggingface_hub.errors import HfHubHTTPError
+
+    last = None
+    for attempt in range(6):
+        try:
+            return load_dataset("go_emotions", "simplified", split="train", trust_remote_code=True)
+        except TypeError:
+            # datasets version without the trust_remote_code kwarg
+            return load_dataset("go_emotions", "simplified", split="train")
+        except HfHubHTTPError as e:
+            last = e
+            if "429" in str(e):
+                wait = 20 * (attempt + 1)
+                print(f"HF 429 rate-limited; waiting {wait}s (attempt {attempt + 1}/6)")
+                time.sleep(wait)
+                continue
+            raise
+    raise last
 
 
 def load_balanced():
