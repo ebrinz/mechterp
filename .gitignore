@@ -19,3 +19,4 @@ pipeline/build.log
 # playwright MCP artifacts
 .playwright-mcp/
 verify-*.png
+.vercel

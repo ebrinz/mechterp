@@ -6,7 +6,12 @@ vi.mock('@react-three/fiber', () => ({
   Canvas: ({ children }: { children: React.ReactNode }) => <div data-testid="canvas">{children}</div>,
   useFrame: () => {},
 }))
-vi.mock('@react-three/drei', () => ({ OrbitControls: () => null, Line: () => null }))
+vi.mock('@react-three/drei', () => ({
+  OrbitControls: () => null,
+  Line: () => null,
+  Text: () => null,
+  Billboard: ({ children }: any) => children,
+}))
 
 import { Scene } from './Scene'
 import type { Point, XYZ } from '../types'
