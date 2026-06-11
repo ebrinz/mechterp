@@ -47,6 +47,7 @@ def main():
         wrapped,
         args,
         str(OUT_DIR / "model.onnx"),
+        dynamo=False,  # use the stable TorchScript exporter; dynamic_axes below target it
         input_names=["input_ids", "attention_mask", "token_type_ids"],
         output_names=["last_hidden_state", "hidden_states", "attentions"],
         dynamic_axes={
