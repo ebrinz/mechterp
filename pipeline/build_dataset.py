@@ -19,9 +19,18 @@ OUT_DB = Path(__file__).resolve().parent.parent / "public" / "emotions.sqlite"
 SEED = 42
 
 
+def _load_go_emotions():
+    """Load GoEmotions, tolerating datasets versions that require trust_remote_code for scripts."""
+    try:
+        return load_dataset("go_emotions", "simplified", split="train")
+    except Exception:
+        # datasets>=2.16 gates script-based loaders behind trust_remote_code.
+        return load_dataset("go_emotions", "simplified", split="train", trust_remote_code=True)
+
+
 def load_balanced():
     """GoEmotions 'simplified': features.labels is a sequence of ClassLabel; single-label = exactly one."""
-    ds = load_dataset("go_emotions", "simplified", split="train")
+    ds = _load_go_emotions()
     names = ds.features["labels"].feature.names  # 28 emotion names
     buckets = defaultdict(list)
     for row in ds:
