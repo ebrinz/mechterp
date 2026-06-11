@@ -1,0 +1,7 @@
+# Keep the deploy context lean. The 97MB internals ONNX is unused in v1 (the browser embeds
+# via the HF CDN); the pipeline/docs/logs aren't part of the served site.
+public/models
+pipeline
+docs
+*.log
+.playwright-mcp
