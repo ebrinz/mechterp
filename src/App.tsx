@@ -15,22 +15,24 @@ const K = 8
 export default function App() {
   const [embedder, setEmbedder] = useState<Embedder | null>(null)
   const [store, setStore] = useState<Awaited<ReturnType<typeof VectorStore.fromUrl>> | null>(null)
-  const [loadMsg, setLoadMsg] = useState('Loading model & data…')
+  const [modelMsg, setModelMsg] = useState('Loading model…')
+  const [error, setError] = useState<string | null>(null)
   const [tokens, setTokens] = useState<Token[]>([])
   const [neighbors, setNeighbors] = useState<Neighbor[]>([])
   const [live, setLive] = useState<XYZ | null>(null)
   const [trail, setTrail] = useState<XYZ[]>([])
 
+  // Load data and model INDEPENDENTLY so the cloud renders as soon as the reference DB is
+  // ready (the model can keep loading), and so a failure in either surfaces an error instead
+  // of an eternal spinner.
   useEffect(() => {
     let alive = true
-    ;(async () => {
-      const [e, s] = await Promise.all([
-        Embedder.create((p) => p.progress && setLoadMsg(`Loading model… ${Math.round(p.progress)}%`)),
-        VectorStore.fromUrl('/emotions.sqlite'),
-      ])
-      if (!alive) return
-      setEmbedder(e); setStore(s); setLoadMsg('')
-    })()
+    VectorStore.fromUrl('/emotions.sqlite')
+      .then((s) => { if (alive) setStore(s) })
+      .catch((e) => { if (alive) setError(`Failed to load data: ${e?.message ?? e}`) })
+    Embedder.create((p) => { if (alive && p.progress) setModelMsg(`Loading model… ${Math.round(p.progress)}%`) })
+      .then((e) => { if (alive) { setEmbedder(e); setModelMsg('') } })
+      .catch((e) => { if (alive) setError(`Failed to load model: ${e?.message ?? e}`) })
     return () => { alive = false }
   }, [])
 
@@ -67,18 +69,32 @@ export default function App() {
     <div className="flex h-[100dvh] flex-col bg-gray-950 text-gray-100 md:flex-row">
       <div className="relative flex-1">
         <Scene points={points} centroids={centroids} live={live} trail={trail} />
-        {loadMsg && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/60">{loadMsg}</div>
+        {(error || !store) && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60 p-6 text-center">
+            {error ? (
+              <>
+                <p className="text-red-300">{error}</p>
+                <p className="max-w-sm text-xs text-gray-400">
+                  Check the browser console. If you're running a dev server, restart it so the
+                  data and wasm assets are served.
+                </p>
+              </>
+            ) : (
+              <p>Loading reference cloud…</p>
+            )}
+          </div>
         )}
       </div>
       <div className="md:w-96">
         <BottomSheet>
           <input
-            placeholder="Type a sentence to see where it lands…"
+            placeholder={embedder ? 'Type a sentence to see where it lands…' : 'Loading model…'}
             disabled={!embedder}
             onChange={(e) => onText(e.target.value)}
-            className="mb-3 w-full rounded bg-gray-800 p-2 text-sm outline-none"
+            className="w-full rounded bg-gray-800 p-2 text-sm outline-none"
           />
+          {!embedder && !error && <p className="mb-3 mt-1 text-xs text-gray-400">{modelMsg}</p>}
+          <div className="mb-3" />
           <TokenChips tokens={tokens} onToggle={onToggle} />
           <div className="my-3 border-t border-gray-800" />
           <NeighborPanel neighbors={neighbors} />

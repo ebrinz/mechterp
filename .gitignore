@@ -13,3 +13,7 @@ public/models/
 
 # pipeline run log
 pipeline/build.log
+
+# playwright MCP artifacts
+.playwright-mcp/
+verify-*.png
