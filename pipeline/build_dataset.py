@@ -5,12 +5,12 @@ UMAP is UNSUPERVISED on purpose: we want the real (messy) structure, not faked s
 """
 import sqlite3
 import struct
+import urllib.request
 from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
 import umap
-from datasets import load_dataset
 from sentence_transformers import SentenceTransformer
 
 MODEL_ID = "sentence-transformers/all-MiniLM-L6-v2"
@@ -18,53 +18,48 @@ PER_EMOTION = 60          # ~60 * 28 emotions -> ~1.7k single-label examples
 OUT_DB = Path(__file__).resolve().parent.parent / "public" / "emotions.sqlite"
 SEED = 42
 
+# GoEmotions 'simplified' train split, served from Google's GitHub (not HF) so it is not
+# subject to the HuggingFace metadata-API IP throttling. Format per line:
+#   text <TAB> comma-separated emotion indices <TAB> comment_id
+TSV_URL = "https://raw.githubusercontent.com/google-research/google-research/master/goemotions/data/train.tsv"
 
-def _load_go_emotions():
-    """Load GoEmotions, retrying on HF API 429 rate-limits with backoff.
-
-    A single call path (trust_remote_code=True is accepted on datasets>=2.16 and ignored
-    for parquet-backed datasets) avoids doubling the API hits that trigger throttling.
-    """
-    import time
-
-    from huggingface_hub.errors import HfHubHTTPError
-
-    last = None
-    for attempt in range(6):
-        try:
-            return load_dataset("go_emotions", "simplified", split="train", trust_remote_code=True)
-        except TypeError:
-            # datasets version without the trust_remote_code kwarg
-            return load_dataset("go_emotions", "simplified", split="train")
-        except HfHubHTTPError as e:
-            last = e
-            if "429" in str(e):
-                wait = 20 * (attempt + 1)
-                print(f"HF 429 rate-limited; waiting {wait}s (attempt {attempt + 1}/6)")
-                time.sleep(wait)
-                continue
-            raise
-    raise last
+# Canonical GoEmotions label order (index -> name); matches src/scene/colors.ts EMOTIONS.
+GOEMOTIONS_LABELS = [
+    "admiration", "amusement", "anger", "annoyance", "approval", "caring", "confusion",
+    "curiosity", "desire", "disappointment", "disapproval", "disgust", "embarrassment",
+    "excitement", "fear", "gratitude", "grief", "joy", "love", "nervousness", "optimism",
+    "pride", "realization", "relief", "remorse", "sadness", "surprise", "neutral",
+]
 
 
 def load_balanced():
-    """GoEmotions 'simplified': features.labels is a sequence of ClassLabel; single-label = exactly one."""
-    ds = _load_go_emotions()
-    names = ds.features["labels"].feature.names  # 28 emotion names
+    """Fetch the GoEmotions simplified train TSV from GitHub and stratify single-label examples.
+
+    Single-label (exactly one emotion index) gives unambiguous teaching examples; we cap each
+    emotion at PER_EMOTION for a balanced, legible reference cloud.
+    """
+    with urllib.request.urlopen(TSV_URL, timeout=60) as resp:
+        raw = resp.read().decode("utf-8")
+
     buckets = defaultdict(list)
-    for row in ds:
-        labels = row["labels"]
-        if len(labels) != 1:        # single-label only -> unambiguous teaching examples
+    for line in raw.splitlines():
+        parts = line.split("\t")
+        if len(parts) != 3:
             continue
-        emo = names[labels[0]]
+        text, label_field, _id = parts
+        label_ids = label_field.split(",")
+        if len(label_ids) != 1:     # single-label only -> unambiguous teaching examples
+            continue
+        emo = GOEMOTIONS_LABELS[int(label_ids[0])]
         if len(buckets[emo]) < PER_EMOTION:
-            buckets[emo].append(row["text"])
+            buckets[emo].append(text)
+
     texts, emotions = [], []
     for emo, items in buckets.items():
         for t in items:
             texts.append(t)
             emotions.append(emo)
-    return texts, emotions, names
+    return texts, emotions, GOEMOTIONS_LABELS
 
 
 def pack_vec(v: np.ndarray) -> bytes:
