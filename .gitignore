@@ -10,3 +10,6 @@ __pycache__/
 public/sql-wasm/sql-wasm.wasm
 public/emotions.sqlite
 public/models/
+
+# pipeline run log
+pipeline/build.log
