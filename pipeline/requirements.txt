@@ -5,6 +5,7 @@ onnxruntime==1.18.1
 onnxscript==0.5.4
 datasets==2.21.0
 umap-learn==0.5.6
+scikit-learn==1.5.2   # umap-learn 0.5.6 uses check_array(force_all_finite=...), removed in sklearn>=1.6
 numpy==1.26.4
 sqlite-vec==0.1.6
 pytest==8.3.2
