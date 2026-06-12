@@ -1,7 +1,7 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Line, Text, Billboard } from '@react-three/drei'
 import * as THREE from 'three'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import type { Point, XYZ } from '../types'
 import { emotionColor } from './colors'
 
@@ -49,20 +49,37 @@ function ReferenceCloud({ points }: { points: Point[] }) {
   )
 }
 
-/** Per-emotion landmark: a wireframe sphere at the centroid + a camera-facing text label. */
-function CentroidLabel({ emotion, xyz }: { emotion: string; xyz: XYZ }) {
+/** Per-emotion landmark: a small wireframe sphere; label reveals on hover/tap to keep the
+ *  default view uncluttered (most centroids overlap, so always-on labels are a jumble). */
+function Centroid({
+  emotion,
+  xyz,
+  active,
+  onActivate,
+}: {
+  emotion: string
+  xyz: XYZ
+  active: boolean
+  onActivate: (e: string | null) => void
+}) {
   const color = emotionColor(emotion)
   return (
     <group position={xyz}>
-      <mesh>
-        <sphereGeometry args={[0.1, 16, 16]} />
-        <meshBasicMaterial color={color} wireframe />
+      <mesh
+        onPointerOver={(e) => { e.stopPropagation(); onActivate(emotion) }}
+        onPointerOut={() => onActivate(null)}
+        onPointerDown={(e) => { e.stopPropagation(); onActivate(emotion) }}
+      >
+        <sphereGeometry args={[active ? 0.18 : 0.11, 16, 16]} />
+        <meshBasicMaterial color={color} wireframe={!active} transparent opacity={active ? 0.6 : 1} />
       </mesh>
-      <Billboard>
-        <Text fontSize={0.12} color={color} anchorX="center" anchorY="bottom" position={[0, 0.14, 0]} outlineWidth={0.01} outlineColor="#000000" renderOrder={10}>
-          {emotion}
-        </Text>
-      </Billboard>
+      {active && (
+        <Billboard>
+          <Text fontSize={0.18} color={color} anchorX="center" anchorY="bottom" position={[0, 0.24, 0]} outlineWidth={0.012} outlineColor="#000000" renderOrder={10}>
+            {emotion}
+          </Text>
+        </Billboard>
+      )}
     </group>
   )
 }
@@ -71,7 +88,6 @@ function LivePoint({ live, trail }: { live: XYZ | null; trail: XYZ[] }) {
   return (
     <group>
       {trail.length > 1 && (
-        // drei's <Line> is the supported way to draw a polyline in r3f.
         <Line points={trail} color="#ffffff" lineWidth={1.5} transparent opacity={0.45} />
       )}
       {live && (
@@ -89,13 +105,25 @@ export function Scene({ points, centroids, live, trail }: Props) {
   // Translate the whole scene so the cloud's center sits at the origin — then OrbitControls'
   // default target (0,0,0) pivots on the data instead of empty space off to one side.
   const recenter: XYZ = [-center[0], -center[1], -center[2]]
+  const [activeEmotion, setActiveEmotion] = useState<string | null>(null)
+
   return (
-    <Canvas camera={{ position: [0, 0, 9], fov: 50 }} dpr={[1, 2]}>
+    <Canvas
+      camera={{ position: [0, 0, 9], fov: 50 }}
+      dpr={[1, 2]}
+      onPointerMissed={() => setActiveEmotion(null)}
+    >
       <ambientLight intensity={0.9} />
       <group position={recenter}>
         <ReferenceCloud points={points} />
         {centroids.map((c) => (
-          <CentroidLabel key={c.emotion} emotion={c.emotion} xyz={c.xyz} />
+          <Centroid
+            key={c.emotion}
+            emotion={c.emotion}
+            xyz={c.xyz}
+            active={activeEmotion === c.emotion}
+            onActivate={setActiveEmotion}
+          />
         ))}
         <LivePoint live={live} trail={trail} />
       </group>

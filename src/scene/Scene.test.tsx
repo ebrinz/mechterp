@@ -11,6 +11,7 @@ vi.mock('@react-three/drei', () => ({
   Line: () => null,
   Text: () => null,
   Billboard: ({ children }: any) => children,
+  Html: ({ children }: any) => children,
 }))
 
 import { Scene } from './Scene'
