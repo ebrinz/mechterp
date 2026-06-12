@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, fireEvent, waitFor } from '@testing-library/react'
 
-vi.mock('./embedder/embedder', () => ({
+vi.mock('../embedder/embedder', () => ({
   Embedder: { create: async () => ({ embed: async () => ({ vector: Float32Array.from([1, 0]) }) }) },
 }))
-vi.mock('./vectorStore/vectorStore', () => ({
+vi.mock('../vectorStore/vectorStore', () => ({
   VectorStore: {
     fromUrl: async () => ({
       knn: () => [{ id: 1, text: 'a', emotion: 'joy', xyz: [0, 0, 0], distance: 0.1 }],
@@ -23,11 +23,11 @@ vi.mock('@react-three/drei', () => ({
   Html: ({ children }: any) => children,
 }))
 
-import App from './App'
+import Embeddings from './Embeddings'
 
-describe('App', () => {
+describe('Embeddings (Stage 1)', () => {
   it('embeds typed text and shows a nearest neighbor', async () => {
-    const { getByPlaceholderText, findByText } = render(<App />)
+    const { getByPlaceholderText, findByText } = render(<Embeddings />)
     await waitFor(() => getByPlaceholderText(/type a sentence/i))
     fireEvent.change(getByPlaceholderText(/type a sentence/i), { target: { value: 'I am grateful' } })
     expect(await findByText('joy')).toBeTruthy()

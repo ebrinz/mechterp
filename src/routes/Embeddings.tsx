@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Embedder } from './embedder/embedder'
-import { VectorStore } from './vectorStore/vectorStore'
-import { placeLivePoint } from './placement/placement'
-import { toTokens, maskedSentence, type Token } from './tokens/tokens'
-import { Scene } from './scene/Scene'
-import { TokenChips } from './ui/TokenChips'
-import { NeighborPanel } from './ui/NeighborPanel'
-import { Legend } from './ui/Legend'
-import { BottomSheet } from './ui/BottomSheet'
-import type { Neighbor, Point, XYZ } from './types'
+import { Embedder } from '../embedder/embedder'
+import { VectorStore } from '../vectorStore/vectorStore'
+import { placeLivePoint } from '../placement/placement'
+import { toTokens, maskedSentence, type Token } from '../tokens/tokens'
+import { Scene } from '../scene/Scene'
+import { TokenChips } from '../ui/TokenChips'
+import { NeighborPanel } from '../ui/NeighborPanel'
+import { Legend } from '../ui/Legend'
+import { BottomSheet } from '../ui/BottomSheet'
+import type { Neighbor, Point, XYZ } from '../types'
 
 const K = 8
 
-export default function App() {
+export default function Embeddings() {
   const [embedder, setEmbedder] = useState<Embedder | null>(null)
   const [store, setStore] = useState<Awaited<ReturnType<typeof VectorStore.fromUrl>> | null>(null)
   const [modelMsg, setModelMsg] = useState('Loading model…')
@@ -66,7 +66,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-gray-950 text-gray-100 md:flex-row">
+    <div className="flex h-full flex-1 flex-col bg-gray-950 text-gray-100 md:flex-row">
       <div className="relative flex-1">
         <Scene points={points} centroids={centroids} live={live} trail={trail} />
         {(error || !store) && (
