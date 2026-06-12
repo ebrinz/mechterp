@@ -20,3 +20,4 @@ pipeline/build.log
 .playwright-mcp/
 verify-*.png
 .vercel
+*.jpeg
