@@ -1,13 +1,26 @@
-import { describe, it, expect } from 'vitest'
-import { render } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import { render, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+
+vi.mock('../attention/attentionModel', () => ({
+  AttentionModel: {
+    create: async () => ({
+      analyze: async () => ({
+        tokens: ['[CLS]', 'hi', '[SEP]'],
+        dims: { layers: 6, heads: 12, T: 3 },
+        data: Float32Array.from({ length: 6 * 1 * 12 * 3 * 3 }, () => 0.33),
+      }),
+    }),
+  },
+}))
+
 import { Internals } from './Internals'
 
-describe('Internals teaser', () => {
-  it('describes attention and links back to Stage 1', () => {
-    const { getByText, getByRole } = render(<MemoryRouter><Internals /></MemoryRouter>)
-    expect(getByText(/coming soon/i)).toBeTruthy()
-    expect(getByText(/attention/i)).toBeTruthy()
-    expect(getByRole('link', { name: /back to stage 1/i }).getAttribute('href')).toBe('/embeddings')
+describe('Internals attention explorer', () => {
+  it('analyzes typed text and renders the heatmap', async () => {
+    const { getByPlaceholderText, getAllByTestId } = render(<MemoryRouter><Internals /></MemoryRouter>)
+    await waitFor(() => expect((getByPlaceholderText(/type a sentence/i) as HTMLInputElement).disabled).toBe(false))
+    fireEvent.change(getByPlaceholderText(/type a sentence/i), { target: { value: 'hi there' } })
+    await waitFor(() => expect(getAllByTestId('att-cell').length).toBe(9))
   })
 })

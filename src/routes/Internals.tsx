@@ -1,41 +1,70 @@
-import { Link } from 'react-router-dom'
-
-/** Decorative 8x8 "attention grid" placeholder (pure CSS, scales on mobile). */
-function AttentionGridMock() {
-  const cells = Array.from({ length: 64 }, (_, i) => {
-    const r = Math.floor(i / 8), c = i % 8
-    // a soft diagonal + a couple of "heads" attending to token 0, just for flavor
-    const v = Math.max(0, 1 - Math.abs(r - c) / 3) * 0.7 + (c === 0 ? 0.25 : 0)
-    return Math.min(1, v)
-  })
-  return (
-    <div className="grid w-full max-w-[260px] grid-cols-8 gap-[2px] rounded-lg border border-gray-800 p-2">
-      {cells.map((v, i) => (
-        <div key={i} className="aspect-square rounded-[2px]" style={{ backgroundColor: `rgba(129,140,248,${v.toFixed(2)})` }} />
-      ))}
-    </div>
-  )
-}
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { AttentionModel, type AnalyzeResult } from '../attention/attentionModel'
+import { sliceAttention } from '../attention/slice'
+import { LayerHeadSelector } from '../ui/LayerHeadSelector'
+import { AttentionHeatmap } from '../ui/AttentionHeatmap'
 
 export function Internals() {
+  const [model, setModel] = useState<AttentionModel | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [result, setResult] = useState<AnalyzeResult | null>(null)
+  const [layer, setLayer] = useState(0)
+  const [head, setHead] = useState(0)
+
+  useEffect(() => {
+    let alive = true
+    AttentionModel.create()
+      .then((m) => { if (alive) setModel(m) })
+      .catch((e) => { if (alive) setError(`Failed to load attention model: ${e?.message ?? e}`) })
+    return () => { alive = false }
+  }, [])
+
+  const run = useRef(async (_t: string) => {})
+  run.current = async (text: string) => {
+    if (!model || !text.trim()) { setResult(null); return }
+    try { setResult(await model.analyze(text)) }
+    catch (e: any) { setError(`Analysis failed: ${e?.message ?? e}`) }
+  }
+
+  const matrix = useMemo(
+    () => (result ? sliceAttention(result.data, result.dims, layer, head) : null),
+    [result, layer, head],
+  )
+
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto bg-gray-950 p-6 text-center text-gray-100">
-      <div className="max-w-xl">
-        <span className="rounded-full bg-indigo-600/20 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-indigo-300">
-          coming soon
-        </span>
-        <h1 className="mt-3 text-3xl font-bold tracking-tight">Stage 2 · Internals</h1>
-        <p className="mt-4 text-sm leading-relaxed text-gray-400">
-          Where we crack the model open. Type a sentence and see its <strong className="text-gray-200">attention
-          patterns</strong> — which tokens attend to which, across all 6 layers and 12 heads — plus the
-          <strong className="text-gray-200"> layer trajectory</strong> of how its representation forms with depth.
-          Read straight from the model's exposed internals.
+    <main className="flex flex-1 flex-col gap-4 overflow-y-auto bg-gray-950 p-4 text-gray-100">
+      <div>
+        <h1 className="text-lg font-semibold">Stage 2 · Attention</h1>
+        <p className="text-xs text-gray-400">
+          Type a sentence to see which tokens attend to which, read from the model's real internals.
+          Each row sums to ~1 (a token distributes its attention across all tokens).
         </p>
       </div>
-      <AttentionGridMock />
-      <Link to="/embeddings" className="text-sm text-gray-400 underline hover:text-gray-200">
-        ← Back to Stage 1
-      </Link>
+      {error ? (
+        <div className="rounded border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">{error}</div>
+      ) : (
+        <>
+          <input
+            placeholder={model ? 'Type a sentence to see its attention…' : 'Loading attention model…'}
+            disabled={!model}
+            onChange={(e) => void run.current(e.target.value)}
+            className="w-full rounded bg-gray-800 p-2 text-sm outline-none"
+          />
+          {result && (
+            <>
+              <LayerHeadSelector
+                layers={result.dims.layers}
+                heads={result.dims.heads}
+                layer={layer}
+                head={head}
+                onLayer={setLayer}
+                onHead={setHead}
+              />
+              {matrix && <AttentionHeatmap tokens={result.tokens} matrix={matrix} />}
+            </>
+          )}
+        </>
+      )}
     </main>
   )
 }
