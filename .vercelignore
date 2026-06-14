@@ -1,6 +1,8 @@
-# Keep the deploy context lean. The 97MB internals ONNX is unused in v1 (the browser embeds
-# via the HF CDN); the pipeline/docs/logs aren't part of the served site.
-public/models
+# Keep the deploy context lean. Ship ONLY the quantized internals model (model.q8.onnx);
+# exclude the 90MB unquantized model and the tokenizer files (tokenizer loads from HF CDN).
+public/models/minilm-internals/model.onnx
+public/models/minilm-internals/*.json
+public/models/minilm-internals/*.txt
 pipeline
 docs
 *.log

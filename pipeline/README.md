@@ -17,9 +17,13 @@ pip install -r requirements.txt
 
 python export_onnx.py        # -> public/models/minilm-internals/model.onnx (+ tokenizer)
 python build_dataset.py      # -> public/emotions.sqlite
+python quantize_onnx.py      # -> public/models/minilm-internals/model.q8.onnx (int8, ~23MB)
 
 pytest tests/test_outputs.py -v   # asserts the data contract + that ONNX exposes internals
 ```
+
+Stage 2 (attention) ships the **quantized** `model.q8.onnx` (~23 MB) same-origin — it's the only
+file under `public/models/` that's git-tracked + deployed; the 90 MB `model.onnx` stays local.
 
 Notes:
 - `export_onnx.py` downloads `all-MiniLM-L6-v2` from HuggingFace (~90 MB) and forces the

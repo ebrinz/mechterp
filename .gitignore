@@ -8,7 +8,12 @@ __pycache__/
 # Build/pipeline artifacts (regenerated locally; see pipeline/README.md)
 *.wasm
 public/sql-wasm/sql-wasm.wasm
-public/models/
+# Ignore everything under public/models EXCEPT the quantized internals model (shipped same-origin
+# for Stage 2). The 90MB model.onnx stays ignored (also caught by *.onnx above).
+public/models/*
+!public/models/minilm-internals/
+public/models/minilm-internals/*
+!public/models/minilm-internals/model.q8.onnx
 # NOTE: public/emotions.sqlite IS committed (3.4MB) so the git-connected Vercel build can
 # serve it — it can't be regenerated in CI (needs the Python pipeline). Regenerate locally
 # with pipeline/build_dataset.py and commit the new file when the reference set changes.
