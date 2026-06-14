@@ -21,3 +21,4 @@ pipeline/build.log
 verify-*.png
 .vercel
 *.jpeg
+public/ort/
