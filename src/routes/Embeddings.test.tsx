@@ -7,35 +7,18 @@ vi.mock('../embedder/embedder', () => ({
 vi.mock('../vectorStore/vectorStore', () => ({
   VectorStore: {
     fromUrl: async () => ({
-      knn: () => [{ id: 1, text: 'a', emotion: 'joy', xyz: [0, 0, 0], distance: 0.1 }],
+      knn: () => [{ id: 1, text: 'neighbor-text', emotion: 'joy', xyz: [0, 0, 0], distance: 0.1 }],
       centroids: () => [],
-      all: () => [{ id: 1, text: 'a', emotion: 'joy', xyz: [0, 0, 0], vec: Float32Array.from([1, 0]) }],
+      all: () => [{ id: 1, text: 'point-zero-text', emotion: 'relief', xyz: [0, 0, 0], vec: Float32Array.from([1, 0]) }],
       count: () => 1,
     }),
   },
 }))
-vi.mock('@react-three/fiber', () => ({
-  Canvas: ({ children }: any) => <div>{children}</div>,
-  useFrame: () => {},
-  useThree: () => ({
-    camera: {},
-    size: { width: 100, height: 100 },
-    gl: {
-      domElement: {
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        getBoundingClientRect: () => ({ left: 0, top: 0 }),
-        style: {},
-      },
-    },
-  }),
-}))
-vi.mock('@react-three/drei', () => ({
-  OrbitControls: () => null,
-  Line: () => null,
-  Text: () => null,
-  Billboard: ({ children }: any) => children,
-  Html: ({ children }: any) => children,
+// Fully stub the 3D Scene; expose its onPickPoint via a button so we can test focus wiring.
+vi.mock('../scene/Scene', () => ({
+  Scene: ({ onPickPoint }: { onPickPoint?: (i: number | null) => void }) => (
+    <button onClick={() => onPickPoint && onPickPoint(0)}>pick-point-0</button>
+  ),
 }))
 
 import Embeddings from './Embeddings'
@@ -45,6 +28,15 @@ describe('Embeddings (Stage 1)', () => {
     const { getByPlaceholderText, findByText } = render(<Embeddings />)
     await waitFor(() => getByPlaceholderText(/type a sentence/i))
     fireEvent.change(getByPlaceholderText(/type a sentence/i), { target: { value: 'I am grateful' } })
-    expect(await findByText('joy')).toBeTruthy()
+    expect(await findByText('neighbor-text')).toBeTruthy()
+  })
+
+  it('clicking a point focuses it: shows its text/emotion and its neighbors', async () => {
+    const { getByText, findByText, findAllByText } = render(<Embeddings />)
+    await waitFor(() => getByText('pick-point-0'))
+    fireEvent.click(getByText('pick-point-0'))
+    expect(await findByText('point-zero-text')).toBeTruthy()          // inspected card text
+    expect((await findAllByText('relief'))[0]).toBeTruthy()           // inspected card emotion (may also appear in Legend)
+    expect(await findByText('neighbor-text')).toBeTruthy()            // that point's neighbors
   })
 })

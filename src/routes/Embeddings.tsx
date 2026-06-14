@@ -8,6 +8,7 @@ import { TokenChips } from '../ui/TokenChips'
 import { NeighborPanel } from '../ui/NeighborPanel'
 import { Legend } from '../ui/Legend'
 import { BottomSheet } from '../ui/BottomSheet'
+import { InspectedCard } from '../ui/InspectedCard'
 import type { Neighbor, Point, XYZ } from '../types'
 
 const K = 8
@@ -21,6 +22,7 @@ export default function Embeddings() {
   const [neighbors, setNeighbors] = useState<Neighbor[]>([])
   const [live, setLive] = useState<XYZ | null>(null)
   const [trail, setTrail] = useState<XYZ[]>([])
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null)
 
   // Load data and model INDEPENDENTLY so the cloud renders as soon as the reference DB is
   // ready (the model can keep loading), and so a failure in either surfaces an error instead
@@ -43,10 +45,11 @@ export default function Embeddings() {
   recompute.current = async (toks: Token[]) => {
     if (!embedder || !store) return
     const sentence = maskedSentence(toks)
-    if (!sentence) { setLive(null); setNeighbors([]); return }
+    if (!sentence) { setLive(null); setNeighbors([]); setFocusedIndex(null); return }
     const { vector } = await embedder.embed(sentence)
     const nbrs = store.knn(vector, K)
     const xyz = placeLivePoint(nbrs)
+    setFocusedIndex(null)
     setNeighbors(nbrs)
     setLive(xyz)
     setTrail((t) => [...t.slice(-40), xyz])
@@ -64,11 +67,18 @@ export default function Embeddings() {
       return next
     })
   }
+  const onPickPoint = (index: number | null) => {
+    if (index == null || !store) { setFocusedIndex(null); void recompute.current(tokens); return }
+    const p = points[index]
+    if (!p) return
+    setFocusedIndex(index)
+    setNeighbors(store.knn(p.vec, K))
+  }
 
   return (
     <div className="flex h-full flex-1 flex-col bg-gray-950 text-gray-100 md:flex-row">
       <div className="relative flex-1">
-        <Scene points={points} centroids={centroids} live={live} trail={trail} />
+        <Scene points={points} centroids={centroids} live={live} trail={trail} focusedIndex={focusedIndex} onPickPoint={onPickPoint} />
         {(error || !store) && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60 p-6 text-center">
             {error ? (
@@ -97,6 +107,9 @@ export default function Embeddings() {
           <div className="mb-3" />
           <TokenChips tokens={tokens} onToggle={onToggle} />
           <div className="my-3 border-t border-gray-800" />
+          {focusedIndex != null && points[focusedIndex] && (
+            <InspectedCard point={points[focusedIndex]} onClear={() => onPickPoint(null)} />
+          )}
           <NeighborPanel neighbors={neighbors} />
           <div className="my-3 border-t border-gray-800" />
           <Legend />
