@@ -1,15 +1,20 @@
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls, Line, Text, Billboard } from '@react-three/drei'
 import * as THREE from 'three'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Point, XYZ } from '../types'
 import { emotionColor } from './colors'
+import { nearestPointToCursor } from './picking'
+
+const PICK_RADIUS_PX = 14
 
 interface Props {
   points: Point[]
   centroids: { emotion: string; xyz: XYZ }[]
   live: XYZ | null
   trail: XYZ[]
+  focusedIndex?: number | null
+  onPickPoint?: (index: number | null) => void
 }
 
 /** Bounding-box center of the cloud — used to recenter so orbit/zoom pivot on the data. */
@@ -24,6 +29,67 @@ function cloudCenter(points: Point[]): XYZ {
     if (z < minz) minz = z; if (z > maxz) maxz = z
   }
   return [(minx + maxx) / 2, (miny + maxy) / 2, (minz + maxz) / 2]
+}
+
+/** Screen-space picker: projects recentered points to pixels each pointer event and reports the
+ *  nearest under the cursor. Lives inside the Canvas for useThree access. Renders nothing. */
+function PointPicker({
+  points,
+  center,
+  onHover,
+  onPick,
+}: {
+  points: Point[]
+  center: XYZ
+  onHover: (i: number | null) => void
+  onPick: (i: number | null) => void
+}) {
+  const { camera, gl, size } = useThree()
+  const base = useMemo(
+    () => points.map((p) => new THREE.Vector3(p.xyz[0] - center[0], p.xyz[1] - center[1], p.xyz[2] - center[2])),
+    [points, center],
+  )
+  const onHoverRef = useRef(onHover); onHoverRef.current = onHover
+  const onPickRef = useRef(onPick); onPickRef.current = onPick
+
+  useEffect(() => {
+    const el = gl.domElement as HTMLElement
+    const scratch = new THREE.Vector3()
+    const project = () =>
+      base.map((b, i) => {
+        scratch.copy(b).project(camera)
+        return { index: i, x: (scratch.x * 0.5 + 0.5) * size.width, y: (-scratch.y * 0.5 + 0.5) * size.height }
+      })
+    const toCursor = (e: PointerEvent) => {
+      const r = el.getBoundingClientRect()
+      return { x: e.clientX - r.left, y: e.clientY - r.top }
+    }
+    let downAt: { x: number; y: number } | null = null
+    const onMove = (e: PointerEvent) => {
+      const i = nearestPointToCursor(project(), toCursor(e), PICK_RADIUS_PX)
+      onHoverRef.current(i)
+      el.style.cursor = i != null ? 'pointer' : ''
+    }
+    const onDown = (e: PointerEvent) => { downAt = toCursor(e) }
+    const onUp = (e: PointerEvent) => {
+      const up = toCursor(e)
+      if (downAt && Math.hypot(up.x - downAt.x, up.y - downAt.y) < 6) {
+        onPickRef.current(nearestPointToCursor(project(), up, PICK_RADIUS_PX))
+      }
+      downAt = null
+    }
+    el.addEventListener('pointermove', onMove)
+    el.addEventListener('pointerdown', onDown)
+    el.addEventListener('pointerup', onUp)
+    return () => {
+      el.removeEventListener('pointermove', onMove)
+      el.removeEventListener('pointerdown', onDown)
+      el.removeEventListener('pointerup', onUp)
+      el.style.cursor = ''
+    }
+  }, [base, camera, gl, size])
+
+  return null
 }
 
 function ReferenceCloud({ points }: { points: Point[] }) {
@@ -49,8 +115,6 @@ function ReferenceCloud({ points }: { points: Point[] }) {
   )
 }
 
-/** Per-emotion landmark: a small wireframe sphere; label reveals on hover/tap to keep the
- *  default view uncluttered (most centroids overlap, so always-on labels are a jumble). */
 function Centroid({
   emotion,
   xyz,
@@ -100,12 +164,11 @@ function LivePoint({ live, trail }: { live: XYZ | null; trail: XYZ[] }) {
   )
 }
 
-export function Scene({ points, centroids, live, trail }: Props) {
+export function Scene({ points, centroids, live, trail, focusedIndex = null, onPickPoint = () => {} }: Props) {
   const center = useMemo(() => cloudCenter(points), [points])
-  // Translate the whole scene so the cloud's center sits at the origin — then OrbitControls'
-  // default target (0,0,0) pivots on the data instead of empty space off to one side.
   const recenter: XYZ = [-center[0], -center[1], -center[2]]
   const [activeEmotion, setActiveEmotion] = useState<string | null>(null)
+  const [hovered, setHovered] = useState<number | null>(null)
 
   return (
     <Canvas
@@ -114,6 +177,7 @@ export function Scene({ points, centroids, live, trail }: Props) {
       onPointerMissed={() => setActiveEmotion(null)}
     >
       <ambientLight intensity={0.9} />
+      <PointPicker points={points} center={center} onHover={setHovered} onPick={onPickPoint} />
       <group position={recenter}>
         <ReferenceCloud points={points} />
         {centroids.map((c) => (
@@ -126,6 +190,18 @@ export function Scene({ points, centroids, live, trail }: Props) {
           />
         ))}
         <LivePoint live={live} trail={trail} />
+        {hovered != null && points[hovered] && (
+          <mesh position={points[hovered].xyz}>
+            <sphereGeometry args={[0.07, 12, 12]} />
+            <meshBasicMaterial color="#ffffff" transparent opacity={0.85} />
+          </mesh>
+        )}
+        {focusedIndex != null && points[focusedIndex] && (
+          <mesh position={points[focusedIndex].xyz}>
+            <sphereGeometry args={[0.16, 16, 16]} />
+            <meshBasicMaterial color="#ffffff" wireframe />
+          </mesh>
+        )}
       </group>
       <OrbitControls
         makeDefault

@@ -7,7 +7,22 @@ vi.mock('../embedder/embedder', () => ({
 vi.mock('../vectorStore/vectorStore', () => ({
   VectorStore: { fromUrl: async () => { throw new Error('not a database') } },
 }))
-vi.mock('@react-three/fiber', () => ({ Canvas: ({ children }: any) => <div>{children}</div>, useFrame: () => {} }))
+vi.mock('@react-three/fiber', () => ({
+  Canvas: ({ children }: any) => <div>{children}</div>,
+  useFrame: () => {},
+  useThree: () => ({
+    camera: {},
+    size: { width: 100, height: 100 },
+    gl: {
+      domElement: {
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        getBoundingClientRect: () => ({ left: 0, top: 0 }),
+        style: {},
+      },
+    },
+  }),
+}))
 vi.mock('@react-three/drei', () => ({
   OrbitControls: () => null,
   Line: () => null,
