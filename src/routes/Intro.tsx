@@ -1,50 +1,109 @@
 import { Link } from 'react-router-dom'
 
-function StageCard({ to, eyebrow, title, body, soon }: { to: string; eyebrow: string; title: string; body: string; soon?: boolean }) {
+function StageCard({
+  to,
+  code,
+  title,
+  body,
+  status,
+  delay,
+}: {
+  to: string
+  code: string
+  title: string
+  body: string
+  status: string
+  delay: string
+}) {
   return (
     <Link
       to={to}
-      className="group relative flex w-full max-w-sm flex-col gap-2 rounded-xl border border-gray-800 bg-gray-900/60 p-5 text-left transition hover:border-indigo-500"
+      style={{ animationDelay: delay }}
+      className="plate group flex w-full max-w-md flex-1 animate-plate-in flex-col gap-3 p-5 text-left transition-colors duration-300 hover:border-brass/60 sm:p-6"
     >
-      {soon && (
-        <span className="absolute right-4 top-4 rounded-full bg-indigo-600/20 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-indigo-300">
-          coming soon
+      <div className="flex items-center justify-between">
+        <span className="readout text-brass/80">stage {code}</span>
+        <span className="flex items-center gap-1.5 readout text-ink-600">
+          <span className="h-1.5 w-1.5 rounded-full bg-brass shadow-[0_0_8px] shadow-brass/60" />
+          {status}
         </span>
-      )}
-      <span className="text-xs uppercase tracking-wide text-gray-500">{eyebrow}</span>
-      <span className="text-lg font-semibold text-gray-100">{title}</span>
-      <span className="text-sm text-gray-400">{body}</span>
+      </div>
+
+      <h2 className="font-display text-2xl font-medium leading-tight text-paper transition-colors group-hover:text-brass-bright sm:text-[1.7rem]">
+        {title}
+      </h2>
+
+      <p className="font-mono text-[13px] leading-relaxed text-ink-600">{body}</p>
+
+      <span className="mt-1 flex items-center gap-2 readout text-ink-600 transition-colors group-hover:text-brass">
+        enter
+        <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+      </span>
     </Link>
   )
 }
 
 export function Intro() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-8 overflow-y-auto bg-gray-950 p-6 text-center text-gray-100">
-      <div className="max-w-xl">
-        <h1 className="text-4xl font-bold tracking-tight">MechTerp</h1>
-        <p className="mt-2 text-lg text-gray-400">An introduction to mechanistic interpretability.</p>
-        <p className="mt-4 text-sm leading-relaxed text-gray-400">
-          Explore how a small language model (<code className="text-gray-300">all-MiniLM-L6-v2</code>) represents and
-          processes <em>emotion</em> using the GoEmotions dataset — starting from its black-box embeddings and working
-          toward the internal mechanics that produce them.
+    <main className="relative flex flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-12 text-center">
+      <div className="flex w-full max-w-3xl flex-col items-center">
+        <span className="readout animate-fade-in text-brass/80" style={{ animationDelay: '0ms' }}>
+          ✦ field guide · n°00
+        </span>
+
+        <h1
+          className="mt-5 animate-plate-in font-display text-6xl font-semibold leading-[0.95] tracking-tight text-paper sm:text-7xl md:text-8xl"
+          style={{ animationDelay: '60ms' }}
+        >
+          Mech<span className="font-normal italic text-paper/60">Terp</span>
+        </h1>
+
+        <p
+          className="mt-4 animate-fade-in font-mono text-[11px] uppercase tracking-readout text-ink-600"
+          style={{ animationDelay: '220ms' }}
+        >
+          a field instrument for mechanistic interpretability
+        </p>
+
+        <p
+          className="mt-7 max-w-xl animate-fade-in font-display text-lg leading-relaxed text-paper/75 sm:text-xl"
+          style={{ animationDelay: '320ms' }}
+        >
+          Every language model turns words into geometry. MechTerp charts that geometry — mapping how{' '}
+          <span className="font-mono text-[0.85em] text-brass">all-MiniLM-L6-v2</span> arranges{' '}
+          <em className="text-paper">emotion</em> in space, then opening the model to watch the machinery
+          that puts it there.
         </p>
       </div>
-      <div className="flex w-full max-w-3xl flex-col items-stretch justify-center gap-4 md:flex-row">
+
+      <div
+        className="mt-12 flex w-full max-w-3xl animate-fade-in flex-col items-stretch gap-4 md:flex-row"
+        style={{ animationDelay: '420ms' }}
+      >
         <StageCard
           to="/embeddings"
-          eyebrow="Stage 1"
-          title="Embedding Space →"
-          body="Type a sentence and watch where it lands — and drifts — in a 3D map of emotion embeddings."
+          code="01"
+          title="Embedding Space"
+          body="Type a sentence and watch it land — and drift — through a 3-D survey of emotion embeddings. Mask a word; the point moves. That motion is saliency."
+          status="open"
+          delay="480ms"
         />
         <StageCard
           to="/internals"
-          eyebrow="Stage 2"
-          title="Internals"
-          body="Crack the model open: attention patterns and how a sentence's representation forms layer by layer."
-          soon
+          code="02"
+          title="Internals · Attention"
+          body="Crack the model open. Read its real self-attention as a token×token field — which words reach for which, head by head, layer by layer."
+          status="live"
+          delay="600ms"
         />
       </div>
+
+      <p
+        className="mt-10 animate-fade-in font-mono text-[10px] tracking-readout text-ink-700"
+        style={{ animationDelay: '760ms' }}
+      >
+        runs entirely in your browser · no data leaves the device
+      </p>
     </main>
   )
 }

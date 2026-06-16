@@ -20,7 +20,7 @@ function renderAt(path: string) {
 describe('AppLayout routing', () => {
   it('renders the Intro landing at /', () => {
     const { getByText } = renderAt('/')
-    expect(getByText(/introduction to mechanistic interpretability/i)).toBeTruthy()
+    expect(getByText(/mechanistic interpretability/i)).toBeTruthy()
   })
   it('renders Stage 1 at /embeddings', () => {
     const { getByText } = renderAt('/embeddings')
@@ -31,7 +31,7 @@ describe('AppLayout routing', () => {
     expect(getAllByText(/attention/i).length).toBeGreaterThan(0)
   })
   it('shows the nav on every page', () => {
-    const { getByText } = renderAt('/internals')
-    expect(getByText('MechTerp')).toBeTruthy()
+    const { getByRole } = renderAt('/internals')
+    expect(getByRole('link', { name: 'MechTerp' })).toBeTruthy()
   })
 })

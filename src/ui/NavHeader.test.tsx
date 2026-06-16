@@ -5,15 +5,15 @@ import { NavHeader } from './NavHeader'
 
 describe('NavHeader', () => {
   it('renders the wordmark and three stage links', () => {
-    const { getByText, getByRole } = render(
+    const { getByRole } = render(
       <MemoryRouter initialEntries={['/embeddings']}>
         <NavHeader />
       </MemoryRouter>,
     )
-    expect(getByText('MechTerp')).toBeTruthy()
+    expect(getByRole('link', { name: 'MechTerp' })).toBeTruthy()
     expect(getByRole('link', { name: /intro/i })).toBeTruthy()
-    expect(getByRole('link', { name: /stage 1/i })).toBeTruthy()
-    expect(getByRole('link', { name: /stage 2/i })).toBeTruthy()
+    expect(getByRole('link', { name: /embeddings/i })).toBeTruthy()
+    expect(getByRole('link', { name: /internals/i })).toBeTruthy()
   })
 
   it('marks the active route with aria-current', () => {
@@ -22,6 +22,6 @@ describe('NavHeader', () => {
         <NavHeader />
       </MemoryRouter>,
     )
-    expect(getByRole('link', { name: /stage 1/i }).getAttribute('aria-current')).toBe('page')
+    expect(getByRole('link', { name: /embeddings/i }).getAttribute('aria-current')).toBe('page')
   })
 })
