@@ -76,42 +76,52 @@ export default function Embeddings() {
   }
 
   return (
-    <div className="flex h-full flex-1 flex-col bg-gray-950 text-gray-100 md:flex-row">
+    <div className="flex h-full flex-1 flex-col bg-ink-900 text-paper md:flex-row">
       <div className="relative flex-1">
         <Scene points={points} centroids={centroids} live={live} trail={trail} focusedIndex={focusedIndex} onPickPoint={onPickPoint} />
+        {/* survey readout overlay, top-left of the plot */}
+        <div className="pointer-events-none absolute left-3 top-3 hidden md:block">
+          <span className="readout text-brass/70">stage 01 · embedding survey</span>
+        </div>
         {(error || !store) && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/60 p-6 text-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-ink-950/70 p-6 text-center backdrop-blur-sm">
             {error ? (
               <>
-                <p className="text-red-300">{error}</p>
-                <p className="max-w-sm text-xs text-gray-400">
+                <span className="readout text-red-400">err</span>
+                <p className="font-mono text-sm text-red-200">{error}</p>
+                <p className="max-w-sm font-mono text-[11px] leading-relaxed text-ink-600">
                   Check the browser console. If you're running a dev server, restart it so the
                   data and wasm assets are served.
                 </p>
               </>
             ) : (
-              <p>Loading reference cloud…</p>
+              <>
+                <span className="readout animate-fade-in text-ink-600">plotting reference survey…</span>
+              </>
             )}
           </div>
         )}
       </div>
-      <div className="md:w-96">
+      <div className="md:w-96 md:shrink-0">
         <BottomSheet>
+          <span className="readout mb-1.5 block text-ink-600">input</span>
           <input
-            placeholder={embedder ? 'Type a sentence to see where it lands…' : 'Loading model…'}
+            placeholder={embedder ? 'Type a sentence to chart where it lands…' : 'Calibrating model…'}
             disabled={!embedder}
             onChange={(e) => onText(e.target.value)}
-            className="w-full rounded bg-gray-800 p-2 text-sm outline-none"
+            className="w-full border border-ink-700 bg-ink-850 px-3 py-2.5 font-mono text-sm text-paper outline-none transition-colors placeholder:text-ink-600 focus:border-brass/60 disabled:opacity-60"
           />
-          {!embedder && !error && <p className="mb-3 mt-1 text-xs text-gray-400">{modelMsg}</p>}
-          <div className="mb-3" />
+          {!embedder && !error && <p className="mt-1.5 font-mono text-[11px] text-ink-600">{modelMsg}</p>}
+          <div className="mt-3" />
           <TokenChips tokens={tokens} onToggle={onToggle} />
-          <div className="my-3 border-t border-gray-800" />
+          <div className="rule-tick my-4" />
           {focusedIndex != null && points[focusedIndex] && (
             <InspectedCard point={points[focusedIndex]} onClear={() => onPickPoint(null)} />
           )}
+          {neighbors.length > 0 && <span className="readout mb-2 block text-ink-600">nearest neighbors</span>}
           <NeighborPanel neighbors={neighbors} />
-          <div className="my-3 border-t border-gray-800" />
+          <div className="rule-tick my-4" />
+          <span className="readout mb-2 block text-ink-600">emotion index</span>
           <Legend />
         </BottomSheet>
       </div>

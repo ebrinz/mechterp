@@ -1,31 +1,60 @@
-function Row({ count, value, onChange, label }: { count: number; value: number; onChange: (i: number) => void; label: string }) {
+function ChannelRow({
+  count,
+  value,
+  onChange,
+  label,
+}: {
+  count: number
+  value: number
+  onChange: (i: number) => void
+  label: string
+}) {
   return (
-    <div className="flex flex-wrap items-center gap-1">
-      <span className="mr-1 w-12 text-xs uppercase tracking-wide text-gray-500">{label}</span>
-      {Array.from({ length: count }, (_, i) => (
-        <button
-          key={i}
-          aria-label={`${label} ${i}`}
-          aria-pressed={value === i}
-          onClick={() => onChange(i)}
-          className={`min-h-[36px] min-w-[36px] rounded text-xs ${value === i ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-gray-300 hover:text-white'}`}
-        >
-          {i}
-        </button>
-      ))}
+    <div className="flex items-center gap-2">
+      <span className="readout w-9 shrink-0 text-ink-600">{label}</span>
+      <div className="flex gap-1 overflow-x-auto pb-1">
+        {Array.from({ length: count }, (_, i) => {
+          const active = value === i
+          return (
+            <button
+              key={i}
+              aria-label={`${label} ${i}`}
+              aria-pressed={active}
+              onClick={() => onChange(i)}
+              className={`flex h-9 min-w-[34px] shrink-0 items-center justify-center border font-mono text-xs tabular-nums transition-colors ${
+                active
+                  ? 'border-brass bg-brass text-ink-950 shadow-[0_0_12px_-2px] shadow-brass/50'
+                  : 'border-ink-700 bg-ink-850 text-ink-600 hover:border-ink-600 hover:text-paper'
+              }`}
+            >
+              {i}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
 
 export function LayerHeadSelector({
-  layers, heads, layer, head, onLayer, onHead,
+  layers,
+  heads,
+  layer,
+  head,
+  onLayer,
+  onHead,
 }: {
-  layers: number; heads: number; layer: number; head: number; onLayer: (i: number) => void; onHead: (i: number) => void
+  layers: number
+  heads: number
+  layer: number
+  head: number
+  onLayer: (i: number) => void
+  onHead: (i: number) => void
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <Row count={layers} value={layer} onChange={onLayer} label="layer" />
-      <Row count={heads} value={head} onChange={onHead} label="head" />
+      <ChannelRow count={layers} value={layer} onChange={onLayer} label="layer" />
+      <ChannelRow count={heads} value={head} onChange={onHead} label="head" />
     </div>
   )
 }

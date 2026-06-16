@@ -2,4 +2,132 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body, #root { height: 100dvh; margin: 0; }
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100dvh;
+    margin: 0;
+  }
+
+  body {
+    background-color: theme('colors.ink.900');
+    color: theme('colors.paper');
+    font-family: theme('fontFamily.mono');
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* The survey graticule + atmosphere: a fixed coordinate grid, a warm
+     instrument glow from above, and a faint grain — the "field plate" ground
+     that every panel sits on top of. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(theme('colors.ink.700') 1px, transparent 1px),
+      linear-gradient(90deg, theme('colors.ink.700') 1px, transparent 1px);
+    background-size: 38px 38px;
+    background-position: center;
+    opacity: 0.32;
+    -webkit-mask-image: radial-gradient(ellipse 120% 90% at 50% 0%, #000 35%, transparent 85%);
+    mask-image: radial-gradient(ellipse 120% 90% at 50% 0%, #000 35%, transparent 85%);
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 90% 60% at 50% -10%, rgba(217, 164, 65, 0.07), transparent 60%),
+      radial-gradient(ellipse 100% 80% at 50% 120%, rgba(8, 12, 18, 0.6), transparent 70%);
+  }
+
+  #root {
+    position: relative;
+    z-index: 1;
+  }
+
+  ::selection {
+    background: theme('colors.brass.DEFAULT');
+    color: theme('colors.ink.950');
+  }
+
+  /* Instrument scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.ink.600') transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: theme('colors.ink.600');
+    border-radius: 0;
+  }
+}
+
+@layer components {
+  /* Letterspaced small-caps readout label — the machine's voice. */
+  .readout {
+    font-family: theme('fontFamily.mono');
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: theme('letterSpacing.readout');
+    text-transform: uppercase;
+    color: theme('colors.ink.600');
+  }
+
+  /* A panel framed like a scientific plate, with registration corner ticks. */
+  .plate {
+    position: relative;
+    background:
+      linear-gradient(theme('colors.ink.850'), theme('colors.ink.850')) padding-box;
+    border: 1px solid theme('colors.ink.700');
+  }
+  .plate::before,
+  .plate::after {
+    content: '';
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    border-color: theme('colors.brass.DEFAULT');
+    opacity: 0.7;
+    pointer-events: none;
+  }
+  .plate::before {
+    top: -1px;
+    left: -1px;
+    border-top: 1.5px solid;
+    border-left: 1.5px solid;
+  }
+  .plate::after {
+    bottom: -1px;
+    right: -1px;
+    border-bottom: 1.5px solid;
+    border-right: 1.5px solid;
+  }
+
+  /* A hairline rule with a centered brass tick — section divider. */
+  .rule-tick {
+    position: relative;
+    height: 1px;
+    background: theme('colors.ink.700');
+  }
+  .rule-tick::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: -1px;
+    width: 24px;
+    height: 3px;
+    background: theme('colors.brass.DEFAULT');
+    opacity: 0.8;
+  }
+}
