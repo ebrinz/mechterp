@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 const LINKS = [
   { to: '/', code: '00', full: 'Intro', short: 'Intro', end: true },
   { to: '/embeddings', code: '01', full: 'Embeddings', short: 'Embed', end: false },
-  { to: '/internals', code: '02', full: 'Internals', short: 'Intern', end: false },
+  { to: '/internals', code: '02', full: 'Internals', short: 'Attn', end: false },
 ]
 
 export function NavHeader() {
