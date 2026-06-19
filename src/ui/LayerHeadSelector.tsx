@@ -11,7 +11,7 @@ function ChannelRow({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="readout w-9 shrink-0 text-ink-600">{label}</span>
+      <span className="readout w-9 shrink-0">{label}</span>
       <div className="flex gap-1 overflow-x-auto pb-1">
         {Array.from({ length: count }, (_, i) => {
           const active = value === i
@@ -24,7 +24,7 @@ function ChannelRow({
               className={`flex h-9 min-w-[34px] shrink-0 items-center justify-center border font-mono text-xs tabular-nums transition-colors ${
                 active
                   ? 'border-brass bg-brass text-ink-950 shadow-[0_0_12px_-2px] shadow-brass/50'
-                  : 'border-ink-700 bg-ink-850 text-ink-600 hover:border-ink-600 hover:text-paper'
+                  : 'border-ink-700 bg-ink-850 text-ink-400 hover:border-ink-500 hover:text-paper'
               }`}
             >
               {i}

@@ -8,6 +8,7 @@ import { TokenChips } from '../ui/TokenChips'
 import { NeighborPanel } from '../ui/NeighborPanel'
 import { Legend } from '../ui/Legend'
 import { BottomSheet } from '../ui/BottomSheet'
+import { ConceptNote } from '../ui/ConceptNote'
 import { InspectedCard } from '../ui/InspectedCard'
 import type { Neighbor, Point, XYZ } from '../types'
 
@@ -77,7 +78,7 @@ export default function Embeddings() {
 
   return (
     <div className="flex h-full flex-1 flex-col bg-ink-900 text-paper md:flex-row">
-      <div className="relative flex-1">
+      <div className="relative min-w-0 flex-1">
         <Scene points={points} centroids={centroids} live={live} trail={trail} focusedIndex={focusedIndex} onPickPoint={onPickPoint} />
         {/* survey readout overlay, top-left of the plot */}
         <div className="pointer-events-none absolute left-3 top-3 hidden md:block">
@@ -89,14 +90,14 @@ export default function Embeddings() {
               <>
                 <span className="readout text-red-400">err</span>
                 <p className="font-mono text-sm text-red-200">{error}</p>
-                <p className="max-w-sm font-mono text-[11px] leading-relaxed text-ink-600">
+                <p className="max-w-sm font-mono text-[11px] leading-relaxed text-ink-400">
                   Check the browser console. If you're running a dev server, restart it so the
                   data and wasm assets are served.
                 </p>
               </>
             ) : (
               <>
-                <span className="readout animate-fade-in text-ink-600">plotting reference survey…</span>
+                <span className="readout animate-fade-in">plotting reference survey…</span>
               </>
             )}
           </div>
@@ -104,24 +105,43 @@ export default function Embeddings() {
       </div>
       <div className="md:w-96 md:shrink-0">
         <BottomSheet>
-          <span className="readout mb-1.5 block text-ink-600">input</span>
+          <ConceptNote>
+            <p>
+              Each dot is a real sentence from <span className="text-brass">GoEmotions</span>, embedded by
+              all-MiniLM-L6-v2 into a 384-dimensional vector and projected to 3-D with{' '}
+              <span className="text-brass">UMAP</span>. Nearby dots mean similar meaning; the large labelled
+              dots are per-emotion <span className="text-brass">centroids</span> — the average spot for each
+              emotion.
+            </p>
+            <p>
+              Type a sentence and it's embedded the same way, then placed among its nearest neighbors. Mask a
+              word (tap a chip) and the point <span className="text-brass">drifts</span> — how far it moves is
+              how much that word mattered. That drift is saliency.
+            </p>
+            <p>
+              Notice how messy it is: emotions don't form clean clusters. all-MiniLM encodes topic more strongly
+              than feeling, and that overlap is the lesson — Stage&nbsp;2 opens the model to show why.
+            </p>
+          </ConceptNote>
+          <div className="mt-3" />
+          <span className="readout mb-1.5 block">input</span>
           <input
             placeholder={embedder ? 'Type a sentence to chart where it lands…' : 'Calibrating model…'}
             disabled={!embedder}
             onChange={(e) => onText(e.target.value)}
-            className="w-full border border-ink-700 bg-ink-850 px-3 py-2.5 font-mono text-sm text-paper outline-none transition-colors placeholder:text-ink-600 focus:border-brass/60 disabled:opacity-60"
+            className="w-full border border-ink-700 bg-ink-850 px-3 py-2.5 font-mono text-sm text-paper outline-none transition-colors placeholder:text-ink-500 focus:border-brass/60 disabled:opacity-60"
           />
-          {!embedder && !error && <p className="mt-1.5 font-mono text-[11px] text-ink-600">{modelMsg}</p>}
+          {!embedder && !error && <p className="mt-1.5 font-mono text-[11px] text-ink-400">{modelMsg}</p>}
           <div className="mt-3" />
           <TokenChips tokens={tokens} onToggle={onToggle} />
           <div className="rule-tick my-4" />
           {focusedIndex != null && points[focusedIndex] && (
             <InspectedCard point={points[focusedIndex]} onClear={() => onPickPoint(null)} />
           )}
-          {neighbors.length > 0 && <span className="readout mb-2 block text-ink-600">nearest neighbors</span>}
+          {neighbors.length > 0 && <span className="readout mb-2 block">nearest neighbors</span>}
           <NeighborPanel neighbors={neighbors} />
           <div className="rule-tick my-4" />
-          <span className="readout mb-2 block text-ink-600">emotion index</span>
+          <span className="readout mb-2 block">emotion index</span>
           <Legend />
         </BottomSheet>
       </div>

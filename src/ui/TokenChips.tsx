@@ -10,7 +10,7 @@ export function TokenChips({ tokens, onToggle }: { tokens: Token[]; onToggle: (i
           aria-pressed={!t.masked}
           className={`min-h-[44px] border px-3 font-mono text-sm transition-colors ${
             t.masked
-              ? 'border-ink-700 bg-transparent text-ink-600 line-through'
+              ? 'border-ink-700 bg-transparent text-ink-400 line-through'
               : 'border-brass/40 bg-brass/10 text-paper hover:border-brass'
           }`}
         >

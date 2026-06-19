@@ -12,7 +12,7 @@ export function AttentionHeatmap({ tokens, matrix }: { tokens: string[]; matrix:
         {tokens.map((t, j) => (
           <div
             key={`c${j}`}
-            className="bg-ink-900 px-0.5 pb-1 text-center font-mono text-[10px] text-ink-600"
+            className="bg-ink-900 px-0.5 pb-1 text-center font-mono text-[10px] text-ink-400"
             title={t}
           >
             <span className="inline-block max-w-[52px] truncate align-bottom">{t}</span>
@@ -30,7 +30,7 @@ function Row({ token, row, colTokens }: { token: string; row: number[]; colToken
   return (
     <>
       <div
-        className="truncate bg-ink-900 pr-1.5 text-right font-mono text-[10px] leading-[22px] text-ink-600"
+        className="truncate bg-ink-900 pr-1.5 text-right font-mono text-[10px] leading-[22px] text-ink-400"
         title={token}
       >
         {token}

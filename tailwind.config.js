@@ -10,6 +10,7 @@ export default {
       },
       colors: {
         // Deep "ink" ground — cool near-black with a faint blue-green.
+        // 950–600 are surfaces/borders; 500–300 are readable text grays.
         ink: {
           950: '#070a0e',
           900: '#0a0e13',
@@ -17,6 +18,9 @@ export default {
           800: '#111824',
           700: '#19222f',
           600: '#26313f',
+          500: '#6b7686',
+          400: '#9aa6b4',
+          300: '#c2cad6',
         },
         // Warm off-white — "map ink on paper", inverted onto the dark ground.
         paper: '#e9e3d3',
