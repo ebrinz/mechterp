@@ -19,7 +19,7 @@ export function NavHeader() {
         <span className="font-display text-xl font-semibold leading-none tracking-tight text-paper">
           Mech<span className="italic font-normal text-paper/70">Terp</span>
         </span>
-        <span className="readout hidden text-ink-600 sm:inline">field unit</span>
+        <span className="readout hidden sm:inline">field unit</span>
       </NavLink>
 
       <nav className="flex items-stretch gap-0.5 sm:gap-1">
@@ -31,13 +31,13 @@ export function NavHeader() {
             aria-label={l.full}
             className={({ isActive }) =>
               `group relative flex min-h-[44px] items-center gap-1.5 px-2 font-mono text-[11px] tracking-wide transition-colors sm:px-3 sm:text-xs ${
-                isActive ? 'text-brass' : 'text-ink-600 hover:text-paper'
+                isActive ? 'text-brass' : 'text-ink-400 hover:text-paper'
               }`
             }
           >
             {({ isActive }) => (
               <>
-                <span className={`tabular-nums ${isActive ? 'text-brass/70' : 'text-ink-600/70'}`}>
+                <span className={`tabular-nums ${isActive ? 'text-brass/70' : 'text-ink-400/60'}`}>
                   {l.code}
                 </span>
                 <span className="hidden sm:inline">{l.full}</span>

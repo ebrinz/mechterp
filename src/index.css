@@ -81,7 +81,7 @@
     font-weight: 500;
     letter-spacing: theme('letterSpacing.readout');
     text-transform: uppercase;
-    color: theme('colors.ink.600');
+    color: theme('colors.ink.400');
   }
 
   /* A panel framed like a scientific plate, with registration corner ticks. */

@@ -12,11 +12,11 @@ export function NeighborPanel({ neighbors }: { neighbors: Neighbor[] }) {
               style={{ backgroundColor: emotionColor(n.emotion) }}
             />
             <span className="font-mono text-xs text-paper">{n.emotion}</span>
-            <span className="ml-auto font-mono text-[10px] tabular-nums text-ink-600">
+            <span className="ml-auto font-mono text-[10px] tabular-nums text-ink-400">
               {n.distance.toFixed(3)}
             </span>
           </div>
-          <p className="mt-1.5 font-mono text-[11px] leading-relaxed text-ink-500">{n.text}</p>
+          <p className="mt-1.5 font-mono text-[11px] leading-relaxed text-paper/75">{n.text}</p>
         </li>
       ))}
     </ul>
